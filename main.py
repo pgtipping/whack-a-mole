@@ -120,12 +120,26 @@ class ClassicMode(BaseGameMode):
 
     def create_widgets(self):
         """Create game widgets"""
-        # Configure main frame
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
+        # Set fixed window size and center it
+        window_width = 800
+        window_height = 600
+        self.root.geometry(f"{window_width}x{window_height}")
+        self.root.resizable(False, False)  # Prevent window resizing
+        
+        # Center window on screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f"+{x}+{y}")
 
-        # Create a container frame for all game elements
+        # Configure main frame
+        self.main_frame.pack_forget()  # Remove existing pack
+        self.main_frame.pack(fill=tk.BOTH)
+
+        # Create centered container frame
         self.container_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.container_frame.pack(expand=True)
+        self.container_frame.place(relx=0.5, rely=0.1, anchor='n')  # Position at top center
 
         # Score frame
         self.score_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
@@ -148,7 +162,8 @@ class ClassicMode(BaseGameMode):
         self.grid_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
         self.grid_frame.pack(pady=20)
 
-        # Create grid of buttons
+        # Create grid of buttons with fixed size
+        button_size = 100  # Fixed button size
         self.buttons = []
         for row in range(GRID_SIZE):
             button_row = []
@@ -156,6 +171,8 @@ class ClassicMode(BaseGameMode):
                 btn = tk.Button(
                     self.grid_frame,
                     image=self.button_image,
+                    width=button_size,
+                    height=button_size,
                     borderwidth=0,
                     highlightthickness=0,
                     command=lambda r=row, c=col: self.hit_mole((r, c))
@@ -516,8 +533,23 @@ class WhackAMoleGame:
 
     def start_game(self, mode):
         """Start a new game in the specified mode"""
+        # Set window size and position
+        window_width = 800
+        window_height = 600
+        self.root.geometry(f"{window_width}x{window_height}")
+        self.root.resizable(False, False)
+        
+        # Center window on screen
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f"+{x}+{y}")
+        
+        # Clear the UI manager's main frame instead of all root widgets
         self.ui_manager.clear_screen()
         
+        # Create new game mode
         if mode == GameMode.CLASSIC:
             self.current_mode = ClassicMode(self.root, 
                                           self.settings_manager.settings,
