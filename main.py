@@ -121,15 +121,15 @@ class ClassicMode(BaseGameMode):
     def create_widgets(self):
         """Create game widgets"""
         # Configure main frame
-        self.main_frame.pack_configure(fill=tk.BOTH)
-        
-        # Create a container frame for all game elements with fixed width and height
+        self.main_frame.pack(fill=tk.BOTH, expand=True)
+
+        # Create a container frame for all game elements
         self.container_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.container_frame.pack(padx=20, pady=20, anchor='n')  # Anchor to top
-        
+        self.container_frame.pack(expand=True)
+
         # Score frame
         self.score_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=(0, 20))
+        self.score_frame.pack(pady=20)
 
         label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
         self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
@@ -142,24 +142,27 @@ class ClassicMode(BaseGameMode):
 
         # Timer label
         self.timer_label = tk.Label(self.container_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=(0, 20))
+        self.timer_label.pack(pady=20)
 
         # Game grid
         self.grid_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=(0, 20))
+        self.grid_frame.pack(pady=20)
 
         # Create grid of buttons
-        for i in range(GRID_SIZE):
-            row = []
-            for j in range(GRID_SIZE):
-                button = tk.Button(self.grid_frame, 
-                                 image=self.button_image,
-                                 borderwidth=0, 
-                                 highlightthickness=0,
-                                 command=lambda x=i, y=j: self.hit_mole((x, y)))
-                button.grid(row=i, column=j, padx=5, pady=5)
-                row.append(button)
-            self.buttons.append(row)
+        self.buttons = []
+        for row in range(GRID_SIZE):
+            button_row = []
+            for col in range(GRID_SIZE):
+                btn = tk.Button(
+                    self.grid_frame,
+                    image=self.button_image,
+                    borderwidth=0,
+                    highlightthickness=0,
+                    command=lambda r=row, c=col: self.hit_mole((r, c))
+                )
+                btn.grid(row=row, column=col, padx=10, pady=10)
+                button_row.append(btn)
+            self.buttons.append(button_row)
 
         # Configure grid columns and rows to be uniform
         for i in range(GRID_SIZE):
