@@ -182,28 +182,16 @@ class ClassicMode(BaseGameMode):
             self.grid_frame.grid_rowconfigure(i, weight=1)
 
     def create_controls(self):
-        """Create responsive game controls and difficulty settings"""
-        # Get screen dimensions
-        screen_width = self.root.winfo_screenwidth()
-        min_width = 320  # Minimum width for mobile
-        
-        # Calculate responsive sizes
-        button_width = min(120, screen_width // 4)  # Button width scales with screen
-        button_padding = min(10, screen_width // 50)  # Padding scales with screen
-        
-        # Responsive font sizes
-        label_size = max(12, min(15, screen_width // 50))
-        button_size = max(10, min(13, screen_width // 60))
-        
-        # Difficulty frame
+        """Create game control buttons with proper sizing"""
+        # Difficulty frame remains unchanged
         self.difficulty_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.difficulty_frame.pack(pady=(0, button_padding * 2))
+        self.difficulty_frame.pack(pady=(0, 20))
         
         # Stack controls vertically on narrow screens
-        pack_side = tk.TOP if screen_width < min_width else tk.LEFT
+        pack_side = tk.TOP if self.root.winfo_screenwidth() < 320 else tk.LEFT
         
         # Difficulty label with responsive font
-        if screen_width < min_width:
+        if self.root.winfo_screenwidth() < 320:
             difficulty_text = "Difficulty:"
         else:
             difficulty_text = "Difficulty:"
@@ -212,10 +200,10 @@ class ClassicMode(BaseGameMode):
                  text=difficulty_text,
                  bg='#F2F2F7', 
                  fg='#000000',
-                 font=('SF Pro Text', label_size)).pack(
+                 font=('SF Pro Text', 15)).pack(
                      side=pack_side, 
-                     padx=(0, button_padding),
-                     pady=button_padding if pack_side == tk.TOP else 0
+                     padx=(0, 10),
+                     pady=10 if pack_side == tk.TOP else 0
                  )
         
         # Difficulty radio buttons
@@ -225,48 +213,51 @@ class ClassicMode(BaseGameMode):
                                variable=self.difficulty,
                                value=level.value,
                                bg='#F2F2F7',
-                               font=('SF Pro Text', button_size),
+                               font=('SF Pro Text', 15),
                                command=self.update_high_score)
             rb.pack(
                 side=pack_side,
-                padx=button_padding,
-                pady=button_padding if pack_side == tk.TOP else 0
+                padx=10,
+                pady=10 if pack_side == tk.TOP else 0
             )
 
-        # Game controls frame
+        # Game controls frame with fixed width container
         self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.controls_frame.pack(pady=(0, button_padding * 3))
+        self.controls_frame.pack(pady=(0, 30))
 
-        # Responsive button style
+        # Container for centered buttons
+        button_container = tk.Frame(self.controls_frame, bg='#F2F2F7')
+        button_container.pack(expand=True)
+
         button_style = {
-            'font': ('SF Pro Text', button_size),
+            'font': ('SF Pro Text', 15),
             'bg': '#007AFF',
             'fg': 'white',
-            'width': max(8, min(12, screen_width // 80)),  # Responsive width
-            'height': 2 if screen_width < min_width else 1,  # Taller on mobile
+            'width': 12,  # Increased width
+            'height': 2,  # Fixed height
             'bd': 0,
             'borderwidth': 0,
             'highlightthickness': 0,
             'activebackground': '#0051A8'
         }
 
-        # Create game control buttons
-        for button_text, command, initial_state in [
-            ("Start", self.start_game, 'normal'),
-            ("Pause", self.pause_game, 'disabled'),
-            ("Reset", self.reset_game, 'normal')
-        ]:
-            btn = tk.Button(self.controls_frame, 
-                           text=button_text,
-                           command=command, 
-                           state=initial_state,
-                           **button_style)
-            btn.pack(
-                side=pack_side,
-                padx=button_padding,
-                pady=button_padding if pack_side == tk.TOP else 0
-            )
-            setattr(self, f"{button_text.lower()}_button", btn)
+        # Create buttons with consistent spacing
+        self.start_button = tk.Button(button_container, text="Start", 
+                                    command=self.start_game, **button_style)
+        self.start_button.pack(side=tk.LEFT, padx=15)
+
+        self.pause_button = tk.Button(button_container, text="Pause", 
+                                    command=self.pause_game, 
+                                    state=tk.DISABLED, **button_style)
+        self.pause_button.pack(side=tk.LEFT, padx=15)
+
+        self.reset_button = tk.Button(button_container, text="Reset", 
+                                    command=self.reset_game, **button_style)
+        self.reset_button.pack(side=tk.LEFT, padx=15)
+
+        # Run button sizing test
+        self.root.update_idletasks()  # Ensure widgets are rendered
+        self.test_button_sizing()
 
     def setup_game(self):
         self.load_images()
@@ -428,11 +419,17 @@ class ClassicMode(BaseGameMode):
 
         # Check for high score with current difficulty
         current_difficulty = self.difficulty.get()
-        if self.score > self.settings['high_scores'].get(current_difficulty, 0):
+        current_high_score = self.settings['high_scores'].get(current_difficulty, 0)
+        
+        if self.score > current_high_score:
+            print(f"New high score! {self.score} > {current_high_score}")  # Debug print
             self.settings['high_scores'][current_difficulty] = self.score
             self.high_score_label.config(text=f'High Score: {self.score}')
-            self.save_settings_to_file()  # Save the updated high scores
-            self.celebrate_high_score()
+            self.save_settings_to_file()
+            
+            # Ensure celebration happens
+            self.root.after(500, self.celebrate_high_score)
+            self.sound_manager.play_sound('celebration')
 
     def setup_confetti_window(self):
         """Set up the confetti celebration window"""
@@ -457,6 +454,49 @@ class ClassicMode(BaseGameMode):
         self.high_score_label.config(
             text=f'High Score: {self.settings["high_scores"].get(current_difficulty, 0)}'
         )
+
+    def celebrate_high_score(self):
+        """Display celebration effects for new high score"""
+        print("Celebrating high score!")  # Debug print
+        
+        # Update confetti window position
+        self.confetti_window.geometry(f"{self.root.winfo_width()}x{self.root.winfo_height()}+{self.root.winfo_x()}+{self.root.winfo_y()}")
+        self.confetti_canvas.config(width=self.root.winfo_width(), height=self.root.winfo_height())
+        
+        # Make confetti window visible
+        self.confetti_window.lift()
+        self.confetti_window.attributes('-alpha', 1.0)
+        
+        # Create confetti effect
+        for _ in range(200):  # More confetti pieces
+            x = random.randint(0, self.root.winfo_width())
+            y = self.root.winfo_height()  # Start from bottom
+            color = random.choice(['red', 'yellow', 'blue', 'green', 'purple', 'orange'])
+            size = random.randint(5, 15)
+            angle = random.uniform(-math.pi/2, math.pi/2)  # Full upward spread
+            speed = random.uniform(10, 20)  # Increased speed
+            
+            confetti = self.confetti_canvas.create_oval(x, y, x+size, y+size, fill=color)
+            self.animate_confetti(confetti, x, y, angle, speed, 0)
+        
+        # Hide confetti window after celebration
+        self.root.after(10000, lambda: self.confetti_window.attributes('-alpha', 0.0))
+
+    def test_button_sizing(self):
+        """Test method to verify button dimensions and layout"""
+        logging.info("Testing button sizing...")
+        
+        # Test button dimensions
+        for button_name in ['start_button', 'pause_button', 'reset_button']:
+            button = getattr(self, button_name)
+            width = button.winfo_width()
+            height = button.winfo_height()
+            
+            logging.info(f"{button_name} dimensions: {width}x{height}")
+            
+            # Verify minimum touch target size (44x44 pixels)
+            assert width >= 44, f"{button_name} width too small: {width}"
+            assert height >= 44, f"{button_name} height too small: {height}"
 
 class SilverMode(BaseGameMode):
     def __init__(self, root, settings, sound_manager, main_frame):
