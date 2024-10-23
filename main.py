@@ -168,7 +168,7 @@ class ClassicMode(BaseGameMode):
         """Create game control buttons and difficulty settings"""
         # Difficulty frame
         self.difficulty_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.difficulty_frame.pack(pady=10)
+        self.difficulty_frame.pack(pady=(0, 20))  # Adjust top padding
         
         tk.Label(self.difficulty_frame, text="Difficulty:", 
                  bg='#F2F2F7', fg='#000000', 
@@ -182,9 +182,9 @@ class ClassicMode(BaseGameMode):
                           bg='#F2F2F7',
                           font=('SF Pro Text', 13)).pack(side=tk.LEFT, padx=10)
 
-        # Controls frame
+        # Controls frame with more bottom padding
         self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.controls_frame.pack(pady=20)
+        self.controls_frame.pack(pady=(0, 40))  # Increase bottom padding
 
         button_style = {
             'font': ('SF Pro Text', 15),
@@ -342,15 +342,20 @@ class ClassicMode(BaseGameMode):
             i, j = btn_coords
             clicked_button = self.buttons[i][j]
             if clicked_button == self.mole_button:
+                # Prevent multiple hits on the same mole
+                self.mole_button = None  # Clear mole_button reference immediately
+                
+                # Update score and display
                 self.score += 1
                 self.score_label.config(text=f'Score: {self.score}')
                 self.sound_manager.play_sound('hit')
                 
-                # Cancel existing mole task
+                # Cancel any existing mole task
                 if self.mole_task:
                     self.root.after_cancel(self.mole_task)
                     self.mole_task = None
                 
+                # Start disappear animation
                 self.animate_mole_disappear(clicked_button, 0)
 
     def end_game(self):
