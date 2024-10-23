@@ -120,12 +120,16 @@ class ClassicMode(BaseGameMode):
 
     def create_widgets(self):
         """Create game widgets"""
-        # Configure main frame
-        self.main_frame.pack_configure(expand=True, fill=tk.BOTH)
+        # Configure main frame - remove expand=True to prevent pushing content down
+        self.main_frame.pack_configure(fill=tk.BOTH)
+        
+        # Create a container frame for all game elements
+        self.container_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
+        self.container_frame.pack(padx=20, pady=20)  # Add padding around all content
         
         # Score frame
-        self.score_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=20)
+        self.score_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
+        self.score_frame.pack(pady=(0, 20))  # Only add padding at bottom
 
         label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
         self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
@@ -137,12 +141,12 @@ class ClassicMode(BaseGameMode):
         self.high_score_label.pack(side=tk.LEFT, padx=20)
 
         # Timer label
-        self.timer_label = tk.Label(self.main_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=20)
+        self.timer_label = tk.Label(self.container_frame, text=f'Time Left: {self.time_left}', **label_style)
+        self.timer_label.pack(pady=(0, 20))  # Only add padding at bottom
 
         # Game grid
-        self.grid_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=30)
+        self.grid_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
+        self.grid_frame.pack(pady=(0, 20))  # Only add padding at bottom
 
         # Create grid of buttons
         for i in range(GRID_SIZE):
@@ -153,7 +157,7 @@ class ClassicMode(BaseGameMode):
                                  borderwidth=0, 
                                  highlightthickness=0,
                                  command=lambda x=i, y=j: self.hit_mole((x, y)))
-                button.grid(row=i, column=j, padx=10, pady=10)
+                button.grid(row=i, column=j, padx=5, pady=5)
                 row.append(button)
             self.buttons.append(row)
 
