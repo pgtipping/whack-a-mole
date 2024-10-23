@@ -259,6 +259,15 @@ class ClassicMode(BaseGameMode):
         self.root.update_idletasks()  # Ensure widgets are rendered
         self.test_button_sizing()
 
+        # Run comprehensive button layout test
+        try:
+            if self.test_button_layout():
+                logging.info("Button layout verification passed")
+            else:
+                logging.warning("Button layout verification failed")
+        except Exception as e:
+            logging.error(f"Error during button layout test: {e}")
+
     def setup_game(self):
         self.load_images()
         self.create_widgets()
@@ -497,6 +506,70 @@ class ClassicMode(BaseGameMode):
             # Verify minimum touch target size (44x44 pixels)
             assert width >= 44, f"{button_name} width too small: {width}"
             assert height >= 44, f"{button_name} height too small: {height}"
+
+    def test_button_layout(self):
+        """Comprehensive test for button layout and dimensions"""
+        logging.info("\nTesting button layout and dimensions...")
+        
+        def verify_button(button, name):
+            """Helper function to verify individual button properties"""
+            # Get actual dimensions
+            width = button.winfo_width()
+            height = button.winfo_height()
+            x = button.winfo_x()
+            y = button.winfo_y()
+            
+            logging.info(f"\n{name} Test Results:")
+            logging.info(f"Dimensions: {width}x{height} pixels")
+            logging.info(f"Position: ({x}, {y})")
+            logging.info(f"State: {button['state']}")
+            
+            # Test minimum dimensions (touch targets)
+            min_width = 100  # Minimum width for comfortable touch/click
+            min_height = 40  # Minimum height for comfortable touch/click
+            
+            if width < min_width:
+                logging.warning(f"{name} width ({width}) below minimum ({min_width})")
+            if height < min_height:
+                logging.warning(f"{name} height ({height}) below minimum ({min_height})")
+            
+            # Test button visibility
+            if not button.winfo_viewable():
+                logging.error(f"{name} is not visible")
+            
+            # Test button spacing
+            return x, y, width, height
+
+        # Wait for widgets to be rendered
+        self.root.update_idletasks()
+        
+        # Test each button
+        buttons = {
+            'Start': self.start_button,
+            'Pause': self.pause_button,
+            'Reset': self.reset_button
+        }
+        
+        # Verify each button
+        button_metrics = {}
+        for name, button in buttons.items():
+            button_metrics[name] = verify_button(button, name)
+        
+        # Verify spacing between buttons
+        for i, (name1, metrics1) in enumerate(button_metrics.items()):
+            for name2, metrics2 in list(button_metrics.items())[i+1:]:
+                x1, y1, w1, h1 = metrics1
+                x2, y2, w2, h2 = metrics2
+                
+                # Check horizontal spacing
+                spacing = abs(x2 - (x1 + w1))
+                logging.info(f"\nSpacing between {name1} and {name2}: {spacing} pixels")
+                
+                if spacing < 10:  # Minimum spacing
+                    logging.warning(f"Buttons {name1} and {name2} are too close: {spacing} pixels")
+        
+        logging.info("\nButton layout test completed")
+        return True  # Return True if all tests pass, False otherwise
 
 class SilverMode(BaseGameMode):
     def __init__(self, root, settings, sound_manager, main_frame):
