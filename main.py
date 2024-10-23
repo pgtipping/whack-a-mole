@@ -77,8 +77,9 @@ class BaseGameMode:
         raise NotImplementedError
 
 class ClassicMode(BaseGameMode):
-    def __init__(self, root, settings, sound_manager, main_frame):
-        super().__init__(root, settings, sound_manager, main_frame)
+    def __init__(self, root, settings, sound_manager, settings_manager):  # Add settings_manager
+        super().__init__(root, settings, sound_manager)
+        self.settings_manager = settings_manager  # Store reference
         self.difficulty = tk.StringVar(value=settings['last_difficulty'])
         self.buttons = []
         self.mole_button = None
@@ -428,13 +429,11 @@ class ClassicMode(BaseGameMode):
 
         # Check for high score with current difficulty
         current_difficulty = self.difficulty.get()
-        current_high_score = self.settings['high_scores'].get(current_difficulty, 0)
-        
-        if self.score > current_high_score:
-            print(f"New high score! {self.score} > {current_high_score}")  # Debug print
+        if self.score > self.settings['high_scores'].get(current_difficulty, 0):
+            print(f"New high score! {self.score} > {self.settings['high_scores'][current_difficulty]}")
             self.settings['high_scores'][current_difficulty] = self.score
             self.high_score_label.config(text=f'High Score: {self.score}')
-            self.save_settings_to_file()
+            self.settings_manager.save_settings()  # Use settings_manager to save
             
             # Ensure celebration happens
             self.root.after(500, self.celebrate_high_score)
@@ -711,15 +710,13 @@ class WhackAMoleGame:
 
     def start_game(self, mode):
         """Start a new game in the specified mode"""
-        # Clear the UI manager's main frame
         self.ui_manager.clear_screen()
         
-        # Create new game mode with existing frame
         if mode == GameMode.CLASSIC:
             self.current_mode = ClassicMode(self.root, 
                                           self.settings_manager.settings,
                                           self.sound_manager,
-                                          self.ui_manager.main_frame)
+                                          self.settings_manager)  # Pass settings_manager
         elif mode == GameMode.SILVER:
             self.current_mode = SilverMode(self.root,
                                          self.settings_manager.settings,
