@@ -37,10 +37,11 @@ MOLE_TIMES = {
 }
 
 class BaseGameMode:
-    def __init__(self, root, settings, sound_manager):
+    def __init__(self, root, settings, sound_manager, main_frame):
         self.root = root
         self.settings = settings
         self.sound_manager = sound_manager
+        self.main_frame = main_frame  # Store the existing frame
         self.score = 0
         self.time_left = GAME_DURATION
         self.paused = False
@@ -76,13 +77,11 @@ class BaseGameMode:
         raise NotImplementedError
 
 class ClassicMode(BaseGameMode):
-    def __init__(self, root, settings, sound_manager):
-        super().__init__(root, settings, sound_manager)
+    def __init__(self, root, settings, sound_manager, main_frame):
+        super().__init__(root, settings, sound_manager, main_frame)
         self.difficulty = tk.StringVar(value=settings['last_difficulty'])
         self.buttons = []
         self.mole_button = None
-        self.main_frame = tk.Frame(root, bg='#F2F2F7')
-        self.main_frame.pack(fill=tk.BOTH, expand=True)
         self.setup_game()
 
     def load_images(self):
@@ -120,29 +119,12 @@ class ClassicMode(BaseGameMode):
 
     def create_widgets(self):
         """Create game widgets"""
-        # Set fixed window size and center it
-        window_width = 800
-        window_height = 600
-        self.root.geometry(f"{window_width}x{window_height}")
-        self.root.resizable(False, False)  # Prevent window resizing
-        
-        # Center window on screen
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.root.geometry(f"+{x}+{y}")
-
-        # Configure main frame
-        self.main_frame.pack_forget()  # Remove existing pack
-        self.main_frame.pack(fill=tk.BOTH)
-
-        # Create centered container frame
-        self.container_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.container_frame.place(relx=0.5, rely=0.1, anchor='n')  # Position at top center
-
+        # Clear existing widgets in main_frame
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+            
         # Score frame
-        self.score_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
+        self.score_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
         self.score_frame.pack(pady=20)
 
         label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
@@ -155,24 +137,20 @@ class ClassicMode(BaseGameMode):
         self.high_score_label.pack(side=tk.LEFT, padx=20)
 
         # Timer label
-        self.timer_label = tk.Label(self.container_frame, text=f'Time Left: {self.time_left}', **label_style)
+        self.timer_label = tk.Label(self.main_frame, text=f'Time Left: {self.time_left}', **label_style)
         self.timer_label.pack(pady=20)
 
         # Game grid
-        self.grid_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
+        self.grid_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
         self.grid_frame.pack(pady=20)
 
-        # Create grid of buttons with fixed size
-        button_size = 100  # Fixed button size
-        self.buttons = []
+        # Create grid of buttons
         for row in range(GRID_SIZE):
             button_row = []
             for col in range(GRID_SIZE):
                 btn = tk.Button(
                     self.grid_frame,
                     image=self.button_image,
-                    width=button_size,
-                    height=button_size,
                     borderwidth=0,
                     highlightthickness=0,
                     command=lambda r=row, c=col: self.hit_mole((r, c))
@@ -187,10 +165,26 @@ class ClassicMode(BaseGameMode):
             self.grid_frame.grid_rowconfigure(i, weight=1)
 
     def create_controls(self):
-        """Create game control buttons"""
-        # Create controls frame in container_frame instead of main_frame
-        self.controls_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
-        self.controls_frame.pack(pady=(0, 20))
+        """Create game control buttons and difficulty settings"""
+        # Difficulty frame
+        self.difficulty_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
+        self.difficulty_frame.pack(pady=10)
+        
+        tk.Label(self.difficulty_frame, text="Difficulty:", 
+                 bg='#F2F2F7', fg='#000000', 
+                 font=('SF Pro Text', 15)).pack(side=tk.LEFT, padx=(0, 10))
+        
+        for level in DifficultyLevel:
+            tk.Radiobutton(self.difficulty_frame, 
+                          text=level.value,
+                          variable=self.difficulty,
+                          value=level.value,
+                          bg='#F2F2F7',
+                          font=('SF Pro Text', 13)).pack(side=tk.LEFT, padx=10)
+
+        # Controls frame
+        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
+        self.controls_frame.pack(pady=20)
 
         button_style = {
             'font': ('SF Pro Text', 15),
@@ -209,7 +203,8 @@ class ClassicMode(BaseGameMode):
         self.start_button.grid(row=0, column=0, padx=10)
 
         self.pause_button = tk.Button(self.controls_frame, text="Pause", 
-                                    command=self.pause_game, state=tk.DISABLED, **button_style)
+                                    command=self.pause_game, 
+                                    state=tk.DISABLED, **button_style)
         self.pause_button.grid(row=0, column=1, padx=10)
 
         self.reset_button = tk.Button(self.controls_frame, text="Reset", 
@@ -394,8 +389,8 @@ class ClassicMode(BaseGameMode):
         self.confetti_canvas.pack(fill=tk.BOTH, expand=True)
 
 class SilverMode(BaseGameMode):
-    def __init__(self, root, settings, sound_manager):
-        super().__init__(root, settings, sound_manager)
+    def __init__(self, root, settings, sound_manager, main_frame):
+        super().__init__(root, settings, sound_manager, main_frame)
         self.level = 1
         self.mole_time = 1500
         self.setup_game()
@@ -533,31 +528,20 @@ class WhackAMoleGame:
 
     def start_game(self, mode):
         """Start a new game in the specified mode"""
-        # Set window size and position
-        window_width = 800
-        window_height = 600
-        self.root.geometry(f"{window_width}x{window_height}")
-        self.root.resizable(False, False)
-        
-        # Center window on screen
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width - window_width) // 2
-        y = (screen_height - window_height) // 2
-        self.root.geometry(f"+{x}+{y}")
-        
-        # Clear the UI manager's main frame instead of all root widgets
+        # Clear the UI manager's main frame
         self.ui_manager.clear_screen()
         
-        # Create new game mode
+        # Create new game mode with existing frame
         if mode == GameMode.CLASSIC:
             self.current_mode = ClassicMode(self.root, 
                                           self.settings_manager.settings,
-                                          self.sound_manager)
+                                          self.sound_manager,
+                                          self.ui_manager.main_frame)
         elif mode == GameMode.SILVER:
             self.current_mode = SilverMode(self.root,
                                          self.settings_manager.settings,
-                                         self.sound_manager)
+                                         self.sound_manager,
+                                         self.ui_manager.main_frame)
 
     def show_settings(self):
         """Show the settings window"""
