@@ -118,44 +118,61 @@ class ClassicMode(BaseGameMode):
                 logging.error(f"Error loading animation images: {e}")
 
     def create_widgets(self):
-        """Create game widgets"""
-        # Clear existing widgets in main_frame
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
-            
-        # Score frame
+        """Create responsive game widgets"""
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        min_width = 320  # Minimum width for mobile
+        
+        # Calculate responsive sizes
+        label_size = max(12, min(24, screen_width // 40))
+        grid_padding = min(10, screen_width // 50)
+        
+        # Score frame with responsive text
         self.score_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=20)
+        self.score_frame.pack(pady=grid_padding * 2)
 
-        label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
-        self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
-        self.score_label.pack(side=tk.LEFT, padx=20)
+        label_style = {
+            'font': ('SF Pro Display', label_size),
+            'bg': '#F2F2F7',
+            'fg': '#000000'
+        }
 
-        self.high_score_label = tk.Label(self.score_frame, 
-            text=f'High Score: {self.settings["high_scores"][self.difficulty.get()]}', 
-            **label_style)
-        self.high_score_label.pack(side=tk.LEFT, padx=20)
+        # Use shorter text on mobile
+        score_text = f'Score: {self.score}'
+        high_score_text = f'{"HS" if screen_width < min_width else "High Score"}: {self.settings["high_scores"][self.difficulty.get()]}'
+
+        self.score_label = tk.Label(self.score_frame, text=score_text, **label_style)
+        self.score_label.pack(side=tk.LEFT, padx=grid_padding)
+
+        self.high_score_label = tk.Label(self.score_frame, text=high_score_text, **label_style)
+        self.high_score_label.pack(side=tk.LEFT, padx=grid_padding)
 
         # Timer label
         self.timer_label = tk.Label(self.main_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=20)
+        self.timer_label.pack(pady=grid_padding * 2)
 
-        # Game grid
+        # Game grid with responsive sizing
         self.grid_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=20)
+        self.grid_frame.pack(pady=grid_padding * 2)
+
+        # Calculate button size based on screen width
+        button_size = max(60, min(100, screen_width // 6))
 
         # Create grid of buttons
+        self.buttons = []
         for row in range(GRID_SIZE):
             button_row = []
             for col in range(GRID_SIZE):
                 btn = tk.Button(
                     self.grid_frame,
                     image=self.button_image,
+                    width=button_size,
+                    height=button_size,
                     borderwidth=0,
                     highlightthickness=0,
                     command=lambda r=row, c=col: self.hit_mole((r, c))
                 )
-                btn.grid(row=row, column=col, padx=10, pady=10)
+                btn.grid(row=row, column=col, padx=grid_padding, pady=grid_padding)
                 button_row.append(btn)
             self.buttons.append(button_row)
 
@@ -165,61 +182,91 @@ class ClassicMode(BaseGameMode):
             self.grid_frame.grid_rowconfigure(i, weight=1)
 
     def create_controls(self):
-        """Create game control buttons and difficulty settings"""
+        """Create responsive game controls and difficulty settings"""
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        min_width = 320  # Minimum width for mobile
+        
+        # Calculate responsive sizes
+        button_width = min(120, screen_width // 4)  # Button width scales with screen
+        button_padding = min(10, screen_width // 50)  # Padding scales with screen
+        
+        # Responsive font sizes
+        label_size = max(12, min(15, screen_width // 50))
+        button_size = max(10, min(13, screen_width // 60))
+        
         # Difficulty frame
         self.difficulty_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.difficulty_frame.pack(pady=(0, 20))
+        self.difficulty_frame.pack(pady=(0, button_padding * 2))
         
-        # Center-align difficulty controls
-        difficulty_label = tk.Label(self.difficulty_frame, text="Difficulty:", 
-                                  bg='#F2F2F7', fg='#000000', 
-                                  font=('SF Pro Text', 15))
-        difficulty_label.pack(side=tk.LEFT, padx=(0, 10))
+        # Stack controls vertically on narrow screens
+        pack_side = tk.TOP if screen_width < min_width else tk.LEFT
         
+        # Difficulty label with responsive font
+        if screen_width < min_width:
+            difficulty_text = "Difficulty:"
+        else:
+            difficulty_text = "Difficulty:"
+        
+        tk.Label(self.difficulty_frame, 
+                 text=difficulty_text,
+                 bg='#F2F2F7', 
+                 fg='#000000',
+                 font=('SF Pro Text', label_size)).pack(
+                     side=pack_side, 
+                     padx=(0, button_padding),
+                     pady=button_padding if pack_side == tk.TOP else 0
+                 )
+        
+        # Difficulty radio buttons
         for level in DifficultyLevel:
-            rb = tk.Radiobutton(self.difficulty_frame, 
+            rb = tk.Radiobutton(self.difficulty_frame,
                                text=level.value,
                                variable=self.difficulty,
                                value=level.value,
                                bg='#F2F2F7',
-                               font=('SF Pro Text', 13),
-                               command=self.update_high_score)  # Add callback
-            rb.pack(side=tk.LEFT, padx=10)
+                               font=('SF Pro Text', button_size),
+                               command=self.update_high_score)
+            rb.pack(
+                side=pack_side,
+                padx=button_padding,
+                pady=button_padding if pack_side == tk.TOP else 0
+            )
 
-        # Controls frame with fixed width for better alignment
-        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7', width=300)
-        self.controls_frame.pack(pady=(0, 40))
-        self.controls_frame.pack_propagate(False)  # Maintain fixed width
+        # Game controls frame
+        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
+        self.controls_frame.pack(pady=(0, button_padding * 3))
 
+        # Responsive button style
         button_style = {
-            'font': ('SF Pro Text', 15),
+            'font': ('SF Pro Text', button_size),
             'bg': '#007AFF',
             'fg': 'white',
+            'width': max(8, min(12, screen_width // 80)),  # Responsive width
+            'height': 2 if screen_width < min_width else 1,  # Taller on mobile
             'bd': 0,
-            'padx': 20,
-            'pady': 10,
-            'width': 8,  # Fixed width for all buttons
             'borderwidth': 0,
             'highlightthickness': 0,
             'activebackground': '#0051A8'
         }
 
-        # Center-align buttons in controls frame
-        button_container = tk.Frame(self.controls_frame, bg='#F2F2F7')
-        button_container.pack(expand=True)
-
-        self.start_button = tk.Button(button_container, text="Start", 
-                                    command=self.start_game, **button_style)
-        self.start_button.pack(side=tk.LEFT, padx=10)
-
-        self.pause_button = tk.Button(button_container, text="Pause", 
-                                    command=self.pause_game, 
-                                    state=tk.DISABLED, **button_style)
-        self.pause_button.pack(side=tk.LEFT, padx=10)
-
-        self.reset_button = tk.Button(button_container, text="Reset", 
-                                    command=self.reset_game, **button_style)
-        self.reset_button.pack(side=tk.LEFT, padx=10)
+        # Create game control buttons
+        for button_text, command, initial_state in [
+            ("Start", self.start_game, 'normal'),
+            ("Pause", self.pause_game, 'disabled'),
+            ("Reset", self.reset_game, 'normal')
+        ]:
+            btn = tk.Button(self.controls_frame, 
+                           text=button_text,
+                           command=command, 
+                           state=initial_state,
+                           **button_style)
+            btn.pack(
+                side=pack_side,
+                padx=button_padding,
+                pady=button_padding if pack_side == tk.TOP else 0
+            )
+            setattr(self, f"{button_text.lower()}_button", btn)
 
     def setup_game(self):
         self.load_images()
