@@ -120,45 +120,47 @@ class ClassicMode(BaseGameMode):
 
     def create_widgets(self):
         """Create game widgets"""
-        # Center the main frame
-        self.main_frame.pack_configure(expand=True)
+        # Configure main frame
+        self.main_frame.pack_configure(expand=True, fill=tk.BOTH)
         
         # Score frame
         self.score_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=20)  # Increased padding
+        self.score_frame.pack(pady=20)
 
-        label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}  # Increased font size
+        label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
         self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
-        self.score_label.pack(side=tk.LEFT, padx=20)  # Increased padding
+        self.score_label.pack(side=tk.LEFT, padx=20)
 
         self.high_score_label = tk.Label(self.score_frame, 
             text=f'High Score: {self.settings["high_scores"][self.difficulty.get()]}', 
             **label_style)
-        self.high_score_label.pack(side=tk.LEFT, padx=20)  # Increased padding
+        self.high_score_label.pack(side=tk.LEFT, padx=20)
 
         # Timer label
         self.timer_label = tk.Label(self.main_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=20)  # Increased padding
+        self.timer_label.pack(pady=20)
 
         # Game grid
         self.grid_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=30, expand=True)  # Increased padding
+        self.grid_frame.pack(pady=30)
 
-        # Create grid of buttons with larger size
-        button_size = 100  # Increased button size
+        # Create grid of buttons
         for i in range(GRID_SIZE):
             row = []
             for j in range(GRID_SIZE):
                 button = tk.Button(self.grid_frame, 
-                                 width=button_size, 
-                                 height=button_size,
                                  image=self.button_image,
                                  borderwidth=0, 
                                  highlightthickness=0,
                                  command=lambda x=i, y=j: self.hit_mole((x, y)))
-                button.grid(row=i, column=j, padx=10, pady=10)  # Increased padding
+                button.grid(row=i, column=j, padx=10, pady=10)
                 row.append(button)
             self.buttons.append(row)
+
+        # Configure grid columns and rows to be uniform
+        for i in range(GRID_SIZE):
+            self.grid_frame.grid_columnconfigure(i, weight=1)
+            self.grid_frame.grid_rowconfigure(i, weight=1)
 
     def create_controls(self):
         """Create game control buttons"""
