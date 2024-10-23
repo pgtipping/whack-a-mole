@@ -168,23 +168,28 @@ class ClassicMode(BaseGameMode):
         """Create game control buttons and difficulty settings"""
         # Difficulty frame
         self.difficulty_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.difficulty_frame.pack(pady=(0, 20))  # Adjust top padding
+        self.difficulty_frame.pack(pady=(0, 20))
         
-        tk.Label(self.difficulty_frame, text="Difficulty:", 
-                 bg='#F2F2F7', fg='#000000', 
-                 font=('SF Pro Text', 15)).pack(side=tk.LEFT, padx=(0, 10))
+        # Center-align difficulty controls
+        difficulty_label = tk.Label(self.difficulty_frame, text="Difficulty:", 
+                                  bg='#F2F2F7', fg='#000000', 
+                                  font=('SF Pro Text', 15))
+        difficulty_label.pack(side=tk.LEFT, padx=(0, 10))
         
         for level in DifficultyLevel:
-            tk.Radiobutton(self.difficulty_frame, 
-                          text=level.value,
-                          variable=self.difficulty,
-                          value=level.value,
-                          bg='#F2F2F7',
-                          font=('SF Pro Text', 13)).pack(side=tk.LEFT, padx=10)
+            rb = tk.Radiobutton(self.difficulty_frame, 
+                               text=level.value,
+                               variable=self.difficulty,
+                               value=level.value,
+                               bg='#F2F2F7',
+                               font=('SF Pro Text', 13),
+                               command=self.update_high_score)  # Add callback
+            rb.pack(side=tk.LEFT, padx=10)
 
-        # Controls frame with more bottom padding
-        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.controls_frame.pack(pady=(0, 40))  # Increase bottom padding
+        # Controls frame with fixed width for better alignment
+        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7', width=300)
+        self.controls_frame.pack(pady=(0, 40))
+        self.controls_frame.pack_propagate(False)  # Maintain fixed width
 
         button_style = {
             'font': ('SF Pro Text', 15),
@@ -193,23 +198,28 @@ class ClassicMode(BaseGameMode):
             'bd': 0,
             'padx': 20,
             'pady': 10,
+            'width': 8,  # Fixed width for all buttons
             'borderwidth': 0,
             'highlightthickness': 0,
             'activebackground': '#0051A8'
         }
 
-        self.start_button = tk.Button(self.controls_frame, text="Start", 
-                                    command=self.start_game, **button_style)
-        self.start_button.grid(row=0, column=0, padx=10)
+        # Center-align buttons in controls frame
+        button_container = tk.Frame(self.controls_frame, bg='#F2F2F7')
+        button_container.pack(expand=True)
 
-        self.pause_button = tk.Button(self.controls_frame, text="Pause", 
+        self.start_button = tk.Button(button_container, text="Start", 
+                                    command=self.start_game, **button_style)
+        self.start_button.pack(side=tk.LEFT, padx=10)
+
+        self.pause_button = tk.Button(button_container, text="Pause", 
                                     command=self.pause_game, 
                                     state=tk.DISABLED, **button_style)
-        self.pause_button.grid(row=0, column=1, padx=10)
+        self.pause_button.pack(side=tk.LEFT, padx=10)
 
-        self.reset_button = tk.Button(self.controls_frame, text="Reset", 
+        self.reset_button = tk.Button(button_container, text="Reset", 
                                     command=self.reset_game, **button_style)
-        self.reset_button.grid(row=0, column=2, padx=10)
+        self.reset_button.pack(side=tk.LEFT, padx=10)
 
     def setup_game(self):
         self.load_images()
@@ -369,11 +379,12 @@ class ClassicMode(BaseGameMode):
         self.pause_button.config(state='disabled')
         self.start_button.config(state='normal')
 
-        # Check for high score
+        # Check for high score with current difficulty
         current_difficulty = self.difficulty.get()
         if self.score > self.settings['high_scores'].get(current_difficulty, 0):
             self.settings['high_scores'][current_difficulty] = self.score
             self.high_score_label.config(text=f'High Score: {self.score}')
+            self.save_settings_to_file()  # Save the updated high scores
             self.celebrate_high_score()
 
     def setup_confetti_window(self):
@@ -392,6 +403,13 @@ class ClassicMode(BaseGameMode):
                                        bg=transparent_color, 
                                        highlightthickness=0)
         self.confetti_canvas.pack(fill=tk.BOTH, expand=True)
+
+    def update_high_score(self):
+        """Update high score display when difficulty changes"""
+        current_difficulty = self.difficulty.get()
+        self.high_score_label.config(
+            text=f'High Score: {self.settings["high_scores"].get(current_difficulty, 0)}'
+        )
 
 class SilverMode(BaseGameMode):
     def __init__(self, root, settings, sound_manager, main_frame):
