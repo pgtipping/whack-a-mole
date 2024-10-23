@@ -120,16 +120,16 @@ class ClassicMode(BaseGameMode):
 
     def create_widgets(self):
         """Create game widgets"""
-        # Configure main frame - remove expand=True to prevent pushing content down
+        # Configure main frame
         self.main_frame.pack_configure(fill=tk.BOTH)
         
-        # Create a container frame for all game elements
+        # Create a container frame for all game elements with fixed width and height
         self.container_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.container_frame.pack(padx=20, pady=20)  # Add padding around all content
+        self.container_frame.pack(padx=20, pady=20, anchor='n')  # Anchor to top
         
         # Score frame
         self.score_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=(0, 20))  # Only add padding at bottom
+        self.score_frame.pack(pady=(0, 20))
 
         label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}
         self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
@@ -142,11 +142,11 @@ class ClassicMode(BaseGameMode):
 
         # Timer label
         self.timer_label = tk.Label(self.container_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=(0, 20))  # Only add padding at bottom
+        self.timer_label.pack(pady=(0, 20))
 
         # Game grid
         self.grid_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=(0, 20))  # Only add padding at bottom
+        self.grid_frame.pack(pady=(0, 20))
 
         # Create grid of buttons
         for i in range(GRID_SIZE):
@@ -168,8 +168,9 @@ class ClassicMode(BaseGameMode):
 
     def create_controls(self):
         """Create game control buttons"""
-        self.controls_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.controls_frame.pack(pady=20)
+        # Create controls frame in container_frame instead of main_frame
+        self.controls_frame = tk.Frame(self.container_frame, bg='#F2F2F7')
+        self.controls_frame.pack(pady=(0, 20))
 
         button_style = {
             'font': ('SF Pro Text', 15),
