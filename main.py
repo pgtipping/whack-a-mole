@@ -98,57 +98,65 @@ class ClassicMode(BaseGameMode):
             try:
                 image = Image.open(os.path.join(self.current_dir, 'assets', file))
                 if name in ['mole', 'button']:
-                    image = image.resize((80, 80), Image.LANCZOS)
+                    image = image.resize((100, 100), Image.LANCZOS)  # Increased size
                 setattr(self, f'{name}_image', ImageTk.PhotoImage(image))
             except Exception as e:
                 logging.error(f"Error loading {name} image: {e}")
                 setattr(self, f'{name}_image', None)
 
-        # Load animation images
+        # Load animation images with larger size
         self.mole_appear_images = []
         self.mole_disappear_images = []
         for i in range(1, 4):
             try:
-                appear = ImageTk.PhotoImage(Image.open(
-                    os.path.join(self.current_dir, f'assets/mole_appear_{i}.png')))
-                disappear = ImageTk.PhotoImage(Image.open(
-                    os.path.join(self.current_dir, f'assets/mole_disappear_{i}.png')))
-                self.mole_appear_images.append(appear)
-                self.mole_disappear_images.append(disappear)
+                appear = Image.open(os.path.join(self.current_dir, f'assets/mole_appear_{i}.png'))
+                disappear = Image.open(os.path.join(self.current_dir, f'assets/mole_disappear_{i}.png'))
+                appear = appear.resize((100, 100), Image.LANCZOS)  # Increased size
+                disappear = disappear.resize((100, 100), Image.LANCZOS)  # Increased size
+                self.mole_appear_images.append(ImageTk.PhotoImage(appear))
+                self.mole_disappear_images.append(ImageTk.PhotoImage(disappear))
             except Exception as e:
                 logging.error(f"Error loading animation images: {e}")
 
     def create_widgets(self):
         """Create game widgets"""
+        # Center the main frame
+        self.main_frame.pack_configure(expand=True)
+        
         # Score frame
         self.score_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.score_frame.pack(pady=10)
+        self.score_frame.pack(pady=20)  # Increased padding
 
-        label_style = {'font': ('SF Pro Display', 18), 'bg': '#F2F2F7', 'fg': '#000000'}
+        label_style = {'font': ('SF Pro Display', 24), 'bg': '#F2F2F7', 'fg': '#000000'}  # Increased font size
         self.score_label = tk.Label(self.score_frame, text=f'Score: {self.score}', **label_style)
-        self.score_label.pack(side=tk.LEFT, padx=10)
+        self.score_label.pack(side=tk.LEFT, padx=20)  # Increased padding
 
         self.high_score_label = tk.Label(self.score_frame, 
             text=f'High Score: {self.settings["high_scores"][self.difficulty.get()]}', 
             **label_style)
-        self.high_score_label.pack(side=tk.LEFT, padx=10)
+        self.high_score_label.pack(side=tk.LEFT, padx=20)  # Increased padding
 
         # Timer label
         self.timer_label = tk.Label(self.main_frame, text=f'Time Left: {self.time_left}', **label_style)
-        self.timer_label.pack(pady=10)
+        self.timer_label.pack(pady=20)  # Increased padding
 
         # Game grid
         self.grid_frame = tk.Frame(self.main_frame, bg='#F2F2F7')
-        self.grid_frame.pack(pady=20, expand=True)
+        self.grid_frame.pack(pady=30, expand=True)  # Increased padding
 
-        # Create grid of buttons
+        # Create grid of buttons with larger size
+        button_size = 100  # Increased button size
         for i in range(GRID_SIZE):
             row = []
             for j in range(GRID_SIZE):
-                button = tk.Button(self.grid_frame, image=self.button_image, 
-                                 borderwidth=0, highlightthickness=0,
+                button = tk.Button(self.grid_frame, 
+                                 width=button_size, 
+                                 height=button_size,
+                                 image=self.button_image,
+                                 borderwidth=0, 
+                                 highlightthickness=0,
                                  command=lambda x=i, y=j: self.hit_mole((x, y)))
-                button.grid(row=i, column=j, padx=5, pady=5)
+                button.grid(row=i, column=j, padx=10, pady=10)  # Increased padding
                 row.append(button)
             self.buttons.append(row)
 
